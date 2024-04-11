@@ -1,58 +1,58 @@
 <?php
-// Include the database connection file
-include 'dbinfo.php';
+$servername = "localhost";
+$username = "root"; // Change this to your database username
+$password = ""; // Change this to your database password
+$database = "presentation";
 
-// Fetch tutorials from the database
-$tutorials_query = "SELECT * FROM tutorials";
-$tutorials_result = mysqli_query($con, $tutorials_query);
+// Create connection
+$conn = new mysqli($servername, $username, $password, $database);
 
-// Fetch articles from the database
-$articles_query = "SELECT * FROM articles";
-$articles_result = mysqli_query($con, $articles_query);
+// Check connection
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
+}
 
-// Fetch the background image URL from the database
-$background_image_query = "SELECT header_background_image FROM banner WHERE id = 1"; 
-$background_image_result = mysqli_query($con, $background_image_query);
-$background_image_row = mysqli_fetch_assoc($background_image_result);
-$background_image_url = $background_image_row['header_background_image'];
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  // Prepare and bind parameters
+  $stmt = $conn->prepare("INSERT INTO feedback (name, email, message) VALUES (?, ?, ?)");
+  $stmt->bind_param("sss", $name, $email, $message);
+
+  // Set parameters
+  $name = $_POST['name'];
+  $email = $_POST['email'];
+  $message = $_POST['message'];
+
+  // Execute the query
+  if ($stmt->execute()) {
+    echo "New record created successfully";
+  } else {
+    echo "Error: " . $stmt->error;
+  }
+
+  // Close statement
+  $stmt->close();
+}
+
+// Close connection
+$conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Blog</title>
-<link rel="stylesheet" href="style/index.css">
+  <title>Feedback Form</title>
 </head>
 <body>
-<header style="background-image: url('<?php echo $background_image_url; ?>');">
-    <h1>Assignment 2 - Dynamic Blog</h1>
-    <?php include 'nav-bar.php'; ?>
-</header>
-<main>
-    <aside>
-        <?php while($tutorial = mysqli_fetch_assoc($tutorials_result)) { ?>
-            <div class="tutorial-card">
-                <h3><?php echo $tutorial['title']; ?></h3>
-                <div class="video-container">
-                    <?php echo str_replace('width="560" height="315"', 'width="560" height="315"', $tutorial['video_url']); ?>
-                </div>
-            </div>
-        <?php } ?>
-    </aside>
-
-    <article>
-        <?php while($article = mysqli_fetch_assoc($articles_result)) { ?>
-            <h2><?php echo $article['title']; ?></h2>
-            <div class="blog-post">
-                <img src="<?php echo $article['image_url']; ?>" alt="Image Description">
-                <p><?php echo $article['content']; ?></p>
-            </div>
-        <?php } ?>
-    </article>
-
-</main>
-<?php include 'footer.php'; ?>
+  <h2>Feedback Form</h2>
+  <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name" required><br>
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email" required><br>
+    <label for="message">Message:</label><br>
+    <textarea id="message" name="message" required></textarea><br><br>
+    <input type="submit" value="Submit">
+  </form>
 </body>
 </html>
